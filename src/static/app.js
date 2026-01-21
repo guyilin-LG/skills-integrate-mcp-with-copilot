@@ -86,25 +86,35 @@ document.addEventListener("DOMContentLoaded", () => {
         updateUserStatus();
         fetchActivities();
       } else {
-        const result = await response.json();
-        document.getElementById("login-message").textContent = result.detail || "Login failed";
+        let errorMsg = "Login failed";
+        try {
+          const result = await response.json();
+          errorMsg = result.detail || errorMsg;
+        } catch (e) {
+          // Response was not JSON
+        }
+        document.getElementById("login-message").textContent = errorMsg;
         document.getElementById("login-message").className = "alert alert-danger";
       }
     } catch (error) {
-      document.getElementById("login-message").textContent = "An error occurred";
+      document.getElementById("login-message").textContent = "Network error. Please try again.";
       document.getElementById("login-message").className = "alert alert-danger";
       console.error("Error logging in:", error);
     }
   });
 
   // Handle logout
-  document.getElementById("logout-btn").addEventListener("click", (event) => {
-    event.preventDefault();
+  function logout() {
     authToken = null;
     currentTeacher = null;
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentTeacher");
     updateUserStatus();
+  }
+
+  document.getElementById("logout-btn").addEventListener("click", (event) => {
+    event.preventDefault();
+    logout();
   });
 
   // Function to fetch activities from API
@@ -114,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const activities = await response.json();
 
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -198,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle unregister functionality
   async function handleUnregister(event) {
     event.preventDefault();
-    const button = event.target.closest(".delete-btn");
+    const button = event.currentTarget;
     const activity = button.getAttribute("data-activity");
     const email = button.getAttribute("data-email");
 
@@ -230,6 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if (response.status === 401) {
         showMessage("Session expired. Please login again.", "error");
         logout();
+        fetchActivities();
       } else if (response.status === 403) {
         showMessage("You are not authorized to unregister from this activity", "error");
       } else {
