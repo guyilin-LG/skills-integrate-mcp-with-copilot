@@ -6,13 +6,29 @@
     <title>Mergington High School Activities</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="bg-dark text-white py-4 mb-5">
       <div class="container">
-        <h1 class="mb-2">Mergington High School</h1>
-        <h2 class="h5 text-muted">Extracurricular Activities</h2>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="mb-2">Mergington High School</h1>
+            <h2 class="h5 text-muted">Extracurricular Activities</h2>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-outline-light dropdown-toggle" type="button" id="user-menu" data-bs-toggle="dropdown">
+              <i class="fas fa-user-circle me-2"></i><span id="user-status">Login</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="user-menu">
+              <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#loginModal" id="login-btn">Teacher Login</a></li>
+              <li><hr class="dropdown-divider" id="logout-divider" style="display: none;"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logout-btn" style="display: none;">Logout</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -48,6 +64,32 @@
         </section>
       </div>
     </main>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Teacher Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="login-form">
+              <div class="mb-3">
+                <label for="login-email" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="login-email" required placeholder="teacher@mergington.edu" />
+              </div>
+              <div class="mb-3">
+                <label for="login-password" class="form-label">Password:</label>
+                <input type="password" class="form-control" id="login-password" required placeholder="Enter your password" />
+              </div>
+              <div id="login-message" class="mb-3"></div>
+              <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer class="bg-light py-4 mt-5 border-top">
       <div class="container text-center text-muted">
