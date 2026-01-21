@@ -92,7 +92,7 @@ function displayParticipants(participants, activityName) {
           (email) => `
         <li class="participant-item">
           <span class="participant-email">${email}</span>
-          <button class="delete-btn" data-activity="${activityName}" data-email="${email}">
+          <button class="delete-btn" data-activity="${activityName}" data-email="${email}" aria-label="Remove participant">
             ❌
           </button>
         </li>
