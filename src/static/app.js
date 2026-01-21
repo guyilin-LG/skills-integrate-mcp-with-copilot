@@ -18,8 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (token && teacher) {
       authToken = token;
       currentTeacher = JSON.parse(teacher);
-      updateUserStatus();
     }
+    // Always update status and load activities, regardless of login status
+    updateUserStatus();
   }
 
   // Update user status in header
