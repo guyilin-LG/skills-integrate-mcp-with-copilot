@@ -1,0 +1,13 @@
+{
+  "testimonials": [
+    {
+      "id": "placeholder-1",
+      "name": "Student Testimonials",
+      "text": "We'll be featuring student reviews and experiences here soon!",
+      "activity": null,
+      "rating": null,
+      "video": null,
+      "status": "coming-soon"
+    }
+  ]
+}

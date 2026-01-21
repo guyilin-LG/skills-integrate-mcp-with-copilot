@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="page-title">Activity Details - Mergington High School</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="container">
+        <a href="home.html" class="logo">
+          <h2>Mergington High School</h2>
+        </a>
+        <ul class="nav-links">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="activities.html" class="active">Activities</a></li>
+          <li><a href="lectures.html">Lectures</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="testimonials.html">Testimonials</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Activity Hero -->
+    <header class="activity-hero">
+      <div class="container">
+        <div class="breadcrumb">
+          <a href="home.html">Home</a> / 
+          <a href="activities.html">Activities</a> / 
+          <span id="activity-breadcrumb">Loading...</span>
+        </div>
+        <h1 id="activity-title">Loading...</h1>
+        <p id="activity-category" class="activity-category-badge"></p>
+      </div>
+    </header>
+
+    <main class="container activity-detail-container">
+      <div class="activity-detail-grid">
+        <!-- Left Column: Main Info -->
+        <div class="activity-main-content">
+          <section class="activity-section">
+            <h2>About This Activity</h2>
+            <p id="activity-full-description" class="activity-description"></p>
+          </section>
+
+          <section class="activity-section">
+            <h2>Details</h2>
+            <div class="details-grid">
+              <div class="detail-item">
+                <strong>📅 Schedule:</strong>
+                <span id="activity-schedule"></span>
+              </div>
+              <div class="detail-item">
+                <strong>📍 Location:</strong>
+                <span id="activity-location"></span>
+              </div>
+              <div class="detail-item">
+                <strong>👨‍🏫 Instructor:</strong>
+                <span id="activity-instructor"></span>
+              </div>
+              <div class="detail-item">
+                <strong>👥 Availability:</strong>
+                <span id="activity-availability"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="activity-section">
+            <h2>Current Participants</h2>
+            <div id="participants-list" class="participants-list">
+              <p>Loading participants...</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column: Signup Form -->
+        <div class="activity-sidebar">
+          <div class="signup-card">
+            <h3>Join This Activity</h3>
+            <form id="signup-form" class="signup-form">
+              <div class="form-group">
+                <label for="email">Student Email:</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  required 
+                  placeholder="your-email@mergington.edu" 
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">Sign Up Now</button>
+            </form>
+            <div id="message" class="message hidden"></div>
+          </div>
+
+          <div class="info-card">
+            <h4>Tags</h4>
+            <div id="activity-tags" class="tags-container"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <p>&copy; 2026 Mergington High School. All rights reserved.</p>
+        <p>Building futures through excellence in education</p>
+      </div>
+    </footer>
+
+    <script src="activity-detail.js"></script>
+  </body>
+</html>

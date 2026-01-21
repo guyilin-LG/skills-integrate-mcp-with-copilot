@@ -1,27 +1,665 @@
+/* ==================== Base Styles ==================== */
+/*
+ * ====== 布局宽度问题分析 ======
+ * 
+ * 问题：为什么内容看起来很窄？
+ * 
+ * 关键因素：
+ * 1. body padding-top: 60px - 为固定导航栏留空间
+ * 2. .container 有 padding: 0 2rem - 左右各减少 32px (2rem = 32px)
+ * 3. .activities-layout 网格 - 250px 左列 + gap 32px + 右列
+ * 
+ * 实际宽度计算示例 (1400px 屏幕宽度)：
+ * ┌─────────────────────────────────────┐
+ * │ 整个视口: 1400px                     │
+ * │ .container padding: 左32px + 右32px   │
+ * │ 可用宽度: 1400 - 64 = 1336px         │
+ * ├──────────────┬──────────────────────┤
+ * │ 筛选器       │ 活动列表              │
+ * │ 250px        │ 1054px                │
+ * │              │ (gap 32px included)   │
+ * └──────────────┴──────────────────────┘
+ * 
+ * 在活动列表 (1054px) 内部：
+ * - .activities-list padding: 2rem (32px 左右)
+ * - 实际卡片容器宽度: 1054 - 64 = 990px
+ * - 这 990px 显示 4 列卡片
+ * - 每列平均: 990 / 4 ≈ 247px
+ * - 加上 gap: 2rem = 32px，所以实际宽度受限
+ * 
+ * 关键点：虽然宽度是响应式的，但由于多层 padding 和固定列数，
+ * 看起来会比较紧凑。这是正常的设计。
+ */
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
   background-color: #f5f5f5;
+  padding-top: 60px; /* Space for fixed navbar */
 }
 
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ==================== Navigation Bar ==================== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand,
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #00ff00;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.logo h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.navbar-menu,
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-menu a,
+.nav-links a {
+  color: #333;
+  font-weight: 600;
+  transition: color 0.3s;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+.navbar-menu a:hover,
+.navbar-menu a.active,
+.nav-links a:hover,
+.nav-links a.active {
+  color: #00ff00;
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+/* ==================== Hero Section ==================== */
+/* 
+ * 主页的顶部 Hero 区域
+ * - 青柠绿渐变背景
+ * - 大标题 + 副标题 + 按钮
+ * 
+ * 此处无宽度限制，会横跨整个视口宽度
+ */
+.hero {
+  background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+  color: #333;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== Featured Activities (Home Page) ==================== */
+/* 
+ * .featured-activities - 主页的精选活动区域（白色背景）
+ * 
+ * HTML 结构：
+ * <section class="featured-activities">
+ *   <div class="container">
+ *     <h2>Featured Activities</h2>
+ *     <div id="featured-activities-grid" class="activities-grid">
+ *       [卡片在这里，显示 1-4 列]
+ *     </div>
+ *   </div>
+ * </section>
+ * 
+ * 布局说明：
+ * - 白色背景区域（与活动列表页的卡片一致）
+ * - 内部有 .container，会有左右 2rem (32px) padding
+ * - .activities-grid 根据屏幕宽度显示 1-4 列卡片
+ * 
+ * 为什么看起来窄？
+ * - .container padding: 0 2rem 会减少有效宽度
+ * - .activities-grid 上面的约束在大屏幕强制 4 列
+ * - 每列 minmax(280px, 1fr) 或强制列数限制实际宽度
+ */
+.featured-activities {
+  background-color: white;            /* 白色背景，与活动卡片一致 */
+  padding: 3rem 0;                    /* 上下内边距：48px */
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+/* ==================== Page Breadcrumb ==================== */
+.breadcrumb {
+  background-color: #ecf0f1;
+  padding: 1rem 2rem;
+}
+
+.breadcrumb-container {
+  /* 已删除：max-width: 1200px; - 旧限制不适用新架构 */
+  /* 新架构用 .container { max-width: 100%; } 控制宽度 */
+  margin: 0 auto;
+  font-size: 0.9rem;
+  padding: 0 2rem;  /* 与 .container 保持一致的 padding */
+}
+
+.breadcrumb a {
+  color: #3498db;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+/* ==================== Main Container ==================== */
+/* 
+ * .container - 所有页面的主容器
+ * 注意：padding: 0 2rem 会在左右各减少 2rem (32px) 的宽度
+ * 例如：在 1400px 屏幕上，实际内容宽度 = 1400 - 64px = 1336px
+ */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;        /* 左右各 32px 的内边距 */
+  width: 100%;
+}
+
+/* 
+ * .activities-layout - 活动列表页面的两列布局
+ * 左列：250px（固定宽度筛选器）
+ * 右列：1fr（剩余空间）
+ * 
+ * ======= 什么是 1fr？=======
+ * fr = fractional unit（分数单位）
+ * 1fr 表示占用所有"剩余空间"的 1 份
+ * 
+ * 例如：grid-template-columns: 250px 1fr
+ * 意思是：
+ * - 第一列固定 250px
+ * - 第二列占用除了 250px 和 gap 之外的所有空间
+ * - 如果有 2fr 3fr，会按比例分配剩余空间
+ * 
+ * 实际计算（1400px 屏幕）：
+ * 总宽度 = 1400px
+ * .container padding = 左32px + 右32px = 64px
+ * 可用宽度 = 1400 - 64 = 1336px
+ * 
+ * .activities-layout 内部分配：
+ * 左列（筛选器）= 250px (固定)
+ * 间距（gap） = 32px
+ * 右列（1fr） = 1336 - 250 - 32 = 1054px
+ * 
+ * 所以 1fr = 1054px（剩余空间）
+ * 如果写成 2fr，就会是 1054px * 2 = 2108px（假设有足够空间）
+ */
+.activities-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;  /* 250px 固定左列 + 剩余空间自动填充 */
+  gap: 2rem;                          /* 两列之间间距 32px */
+}
+
+/* ==================== Activity Cards ==================== */
+/* 
+ * .activities-grid - 活动卡片的响应式网格布局
+ * 
+ * 响应式规则：
+ * 1200px+ （PC大屏）: 4 列
+ * 768px-1199px （平板）: 3 列  
+ * 600px-767px （平板竖屏）: 2 列
+ * < 600px （手机）: 1 列
+ * 
+ * 默认（基础）: repeat(auto-fit, minmax(280px, 1fr))
+ * - 每列最小 280px
+ * - 自动填充可用空间
+ */
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));  /* 基础自适应 */
+  gap: 2rem;                                                      /* 卡片间距 32px */
+  margin-top: 2rem;
+}
+
+/* 在 1200px+ 宽度强制 4 列显示 */
+@media (min-width: 1200px) {
+  .activities-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 在 768-1199px 宽度强制 3 列显示 */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .activities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 在 600-767px 宽度强制 2 列显示 */
+@media (min-width: 600px) and (max-width: 767px) {
+  .activities-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 单个活动卡片样式 */
+.activity-card {
+  background: white;                  /* 卡片背景：白色 */
+  border-radius: 8px;
+  padding: 1.5rem;                    /* 卡片内边距：24px */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;             /* 卡片内容竖向排列 */
+}
+
+/* 卡片悬停效果 */
+.activity-card:hover {
+  transform: translateY(-5px);        /* 向上浮起 5px */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.activity-card-action {
+  margin-top: auto;
+  color: #00ff00;
+  font-weight: 700;
+  font-size: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid #00ff00;
+  text-align: right;
+  transition: all 0.3s;
+}
+
+.activity-card:hover .activity-card-action {
+  color: #333;
+  background-color: #00ff00;
+  padding: 0.75rem;
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  margin-bottom: -1.5rem;
+  margin-top: 1rem;
+  border-radius: 0 0 8px 8px;
+  text-align: center;
+}
+
+.activity-card h3,
+.activity-card h4 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.activity-category-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #00ff00;
+  color: #333;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.activity-info p {
+  margin: 0.5rem 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.activity-card .view-details {
+  margin-top: auto;
+  padding: 0.75rem 1.5rem;
+  background-color: #00ff00;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  align-self: flex-start;
+}
+
+.activity-card .view-details:hover {
+  background-color: #00cc00;
+  transform: scale(1.05);
+}
+
+/* ==================== Activity Detail Page ==================== */
+.activity-detail-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.detail-main,
+.detail-sidebar {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-main h2 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.detail-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.info-item {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.info-item strong {
+  color: #2c3e50;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.activity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  padding: 0.5rem 1rem;
+  background-color: #e8f4f8;
+  color: #2980b9;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+/* ==================== Forms ==================== */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.form-group input,
+.form-group select,
+.signup-form input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.signup-form {
+  margin-top: 1rem;
+}
+
+.signup-form button,
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #00ff00;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.signup-form button:hover,
+button:hover {
+  background-color: #00cc00;
+}
+
+.signup-form button:disabled,
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* ==================== Participants Section ==================== */
+.participants-container {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px dashed #ccc;
+}
+
+.participants-section h4,
+.participants-section h5 {
+  margin-bottom: 8px;
+  color: #1a237e;
+  font-size: 16px;
+}
+
+.participants-section ul,
+.participants-ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.participants-section ul li,
+.participant-item {
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.participants-section ul li::before {
+  display: none;
+}
+
+.participant-email {
+  color: #555;
+  flex-grow: 1;
+  margin-right: 8px;
+}
+
+.delete-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  transition: transform 0.2s;
+  color: #c62828;
+}
+
+.delete-btn:hover {
+  transform: scale(1.2);
+  background-color: #ffebee;
+}
+
+.participants-section p {
+  color: #777;
+  font-style: italic;
+}
+
+/* ==================== Filter Section ==================== */
+/* 
+ * .filter-section - 活动列表页左侧的筛选器面板
+ * 
+ * 布局说明：
+ * - 白色背景，与卡片一致
+ * - 宽度由 .activities-layout 的网格定义（固定 250px）
+ * - position: sticky 使其在滚动时保持在视图
+ * - height: fit-content 让高度自适应内容
+ * 
+ * 在响应式 CSS 中，小屏幕会改为 position: static
+ */
+.filter-section {
+  background: white;                  /* 白色背景，与卡片背景一致 */
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: fit-content;                /* 高度根据内容自动调整 */
+  position: sticky;                   /* 滚动时保持在视图 */
+  top: 80px;                          /* 距离顶部 80px（导航栏高度） */
+}
+
+.filter-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.filter-section select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* 
+ * .activities-list - 活动列表页右侧的内容区域
+ * 
+ * 这个白色背景包裹了所有的活动卡片
+ * 
+ * 为什么宽度受限？
+ * 这个容器是被 .activities-layout 网格分配的「1fr 空间」
+ * 
+ * 1fr 的含义：
+ * 在 .activities-layout: grid-template-columns: 250px 1fr; 中
+ * 1fr = 剩余空间（扣除左列 250px 和 gap 32px 后的所有空间）
+ * 
+ * 实际宽度计算示例（1400px 屏幕）：
+ * ┌─────────────────────────────────────────┐
+ * │ 屏幕宽度: 1400px                        │
+ * │ 减去 .container padding: 64px           │
+ * │ 可用宽度: 1336px                        │
+ * ├─────────────┬──────────────────────────┤
+ * │ 筛选器      │ .activities-list         │
+ * │ 250px       │ 1fr (占 1054px)          │
+ * │ (固定)      │ = 1336-250-32            │
+ * └─────────────┴──────────────────────────┘
+ * 
+ * 这个 1054px 宽度内有 padding: 2rem (32px)
+ * 所以实际卡片容器 = 1054 - 64 = 990px
+ */
+.activities-list {
+  background-color: white;            /* 白色背景容器 */
+  padding: 2rem;                      /* 内边距：32px (左右各) */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== Stats Section ==================== */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+  color: #555;
+  font-size: 1rem;
+}
+
+/* ==================== Coming Soon ==================== */
+.coming-soon {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.coming-soon h2 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.coming-soon p {
+  color: #777;
+  font-size: 1.1rem;
+}
+
+/* ==================== Legacy/Original Styles for index.html ==================== */
+/* 警告：这些规则仅用于 index.html，不应影响新的多页面架构 */
+/* 在新架构中，使用 .navbar 替代 header，使用 .container 替代 main */
 header {
+  /* 已注释：background-color: #1a237e; - 不应用于新架构的 header */
   text-align: center;
   padding: 20px 0;
   margin-bottom: 30px;
-  background-color: #1a237e;
-  color: white;
+  color: #333;
   border-radius: 5px;
+  /* 此规则仅适用于 <header> 标签，新架构用 <nav class="navbar"> */
 }
 
 header h1 {
@@ -33,13 +671,20 @@ main {
   flex-wrap: wrap;
   gap: 30px;
   justify-content: center;
+  /* 已注释：max-width: 1200px; - 不应限制新架构的布局 */
+  /* 新架构使用 .container { max-width: 100%; } */
+  margin: 0 auto;
 }
 
-@media (min-width: 768px) {
+/* 已注释：@media 中的 grid-template-columns
+   原因：main 元素应该保持 flex 布局，不应转换为 grid
+   新架构用 .activities-layout 实现 250px + 1fr 的网格布局
+*/
+/* @media (min-width: 768px) {
   main {
     grid-template-columns: 2fr 1fr;
   }
-}
+} */
 
 section {
   background-color: white;
@@ -47,139 +692,64 @@ section {
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 500px;
+  /* 已删除：max-width: 500px; - 旧限制会压扁 .featured-activities */
+  /* section 现在用于 .featured-activities，应该全宽 */
 }
 
-section h3 {
+/* 警告：避免 section h3 全局规则影响新架构
+   改为 section > h3（直接子元素）以限制作用范围
+   .featured-activities 内的 h3 不应被这个规则着色
+*/
+section > h3 {
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
   color: #1a237e;
+  /* 仅适用于直接在 section 下的 h3，不影响嵌套容器内的 h3 */
 }
 
-.activity-card {
-  margin-bottom: 15px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+/* ==================== Footer ==================== */
+.footer,
+footer {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 2rem;
+  margin-top: 4rem;
 }
 
-.activity-card h4 {
-  margin-bottom: 10px;
-  color: #0066cc;
+.footer p,
+footer p {
+  margin: 0.5rem 0;
+  color: #fff;
 }
 
-.activity-card p {
-  margin-bottom: 8px;
+.footer a,
+footer a {
+  color: #00ff00;
 }
 
-/* New styles for participants section */
-.participants-container {
-  margin-top: 15px;
-  padding-top: 12px;
-  border-top: 1px dashed #ccc;
-}
-
-.participants-section h5 {
-  margin-bottom: 8px;
-  color: #1a237e;
-  font-size: 16px;
-}
-
-.participants-section ul {
-  list-style-type: none;
-  padding-left: 5px;
-}
-
-.participants-section ul li {
-  padding: 4px 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Remove the bullet point pseudo-element */
-.participants-section ul li::before {
-  display: none;
-}
-
-.participant-email {
-  flex-grow: 1;
-  margin-right: 8px;
-}
-
-.delete-btn {
-  background: none;
-  border: none;
-  color: #c62828;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 5px;
-  transition: all 0.2s;
-  border-radius: 3px;
-}
-
-.delete-btn:hover {
-  background-color: #ffebee;
-}
-
-.participants-section p {
-  color: #777;
-  font-style: italic;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-button {
-  background-color: #1a237e;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  font-size: 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #3949ab;
-}
-
+/* ==================== Messages ==================== */
 .message {
-  margin-top: 20px;
-  padding: 10px;
+  padding: 1rem;
   border-radius: 4px;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 500;
 }
 
+.message.success,
 .success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #a5d6a7;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
+.message.error,
 .error {
-  background-color: #ffebee;
-  color: #c62828;
-  border: 1px solid #ef9a9a;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
 .info {
@@ -188,13 +758,100 @@ button:hover {
   border: 1px solid #bee5eb;
 }
 
+.message.hidden,
 .hidden {
   display: none;
 }
 
-footer {
-  text-align: center;
-  margin-top: 30px;
-  padding: 20px;
-  color: #666;
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar .container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .navbar-menu,
+  .nav-links {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .navbar-menu a,
+  .nav-links a {
+    padding: 0.5rem;
+  }
+
+  .logo h2 {
+    font-size: 1.1rem;
+  }
+
+  .activities-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-section {
+    position: static;
+    margin-bottom: 2rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .activities-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .activity-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-info {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  .navbar {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .navbar-menu {
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .hero {
+    padding: 2rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .stat-card h3 {
+    font-size: 2rem;
+  }
 }
