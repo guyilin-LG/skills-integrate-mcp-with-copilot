@@ -3,42 +3,42 @@
     {
       "email": "sarah.johnson@mergington.edu",
       "name": "Sarah Johnson",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "michael.chen@mergington.edu",
       "name": "Michael Chen",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "emily.rodriguez@mergington.edu",
       "name": "Emily Rodriguez",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "david.kim@mergington.edu",
       "name": "David Kim",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "jennifer.smith@mergington.edu",
       "name": "Jennifer Smith",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "robert.williams@mergington.edu",
       "name": "Robert Williams",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "lisa.martinez@mergington.edu",
       "name": "Lisa Martinez",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     },
     {
       "email": "thomas.anderson@mergington.edu",
       "name": "Thomas Anderson",
-      "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIqVG4xe3."
+      "password": "password123"
     }
   ]
 }

@@ -8,7 +8,6 @@ for extracurricular activities at Mergington High School.
 from fastapi import FastAPI, HTTPException, Query, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
@@ -20,9 +19,6 @@ from pathlib import Path
 SECRET_KEY = "mergington-high-school-secret-key-learning-project"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -65,10 +61,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
-
 def get_current_teacher(authorization: Optional[str] = Header(None)) -> str:
     """Verify token and return teacher email"""
     if not authorization:
@@ -107,7 +99,7 @@ def login(email: str = Query(...), password: str = Query(...)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     teacher = teachers[email]
-    if not verify_password(password, teacher["password_hash"]):
+    if teacher["password"] != password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": email, "name": teacher["name"]})
