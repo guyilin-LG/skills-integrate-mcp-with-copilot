@@ -5,10 +5,9 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -24,7 +23,6 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -71,9 +69,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_current_teacher(credentials: HTTPAuthCredentials = Depends(security)) -> str:
+def get_current_teacher(authorization: Optional[str] = Header(None)) -> str:
     """Verify token and return teacher email"""
-    token = credentials.credentials
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    # Extract token from "Bearer <token>" format
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
+    token = parts[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -114,19 +120,15 @@ def login(email: str = Query(...), password: str = Query(...)):
 
 
 @app.get("/verify-token")
-def verify_token(credentials: HTTPAuthCredentials = Depends(security)):
+def verify_token(teacher_email: str = Depends(get_current_teacher)):
     """Verify if token is valid"""
-    try:
-        email = get_current_teacher(credentials)
-        teachers = load_teachers()
-        teacher = teachers[email]
-        return {
-            "valid": True,
-            "email": email,
-            "teacher_name": teacher["name"]
-        }
-    except HTTPException:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    teachers = load_teachers()
+    teacher = teachers[teacher_email]
+    return {
+        "valid": True,
+        "email": teacher_email,
+        "teacher_name": teacher["name"]
+    }
 
 
 @app.get("/activities")
