@@ -36,6 +36,47 @@
       <div class="row g-4">
         <section id="activities-container" class="col-md-8">
           <h3 class="mb-4">Available Activities</h3>
+          
+          <!-- 过滤工具栏 -->
+          <div class="card mb-3 shadow-sm">
+            <div class="card-body bg-light">
+              <div class="row g-2">
+                <!-- 搜索框 -->
+                <div class="col-md-12 mb-2">
+                  <input type="text" class="form-control" id="search-input" placeholder="🔍 Search activities...">
+                </div>
+                <!-- 星期几过滤 -->
+                <div class="col-md-4">
+                  <select class="form-select form-select-sm" id="day-filter">
+                    <option value="">📅 All Days</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                  </select>
+                </div>
+                <!-- 类别过滤 -->
+                <div class="col-md-4">
+                  <select class="form-select form-select-sm" id="category-filter">
+                    <option value="">📚 All Categories</option>
+                    <option value="sports">⚽ Sports</option>
+                    <option value="academic">📖 Academic</option>
+                    <option value="arts">🎨 Arts</option>
+                    <option value="other">🔖 Other</option>
+                  </select>
+                </div>
+                <!-- 排序 -->
+                <div class="col-md-4">
+                  <select class="form-select form-select-sm" id="sort-select">
+                    <option value="name">Sort by Name</option>
+                    <option value="schedule">Sort by Time</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div id="activities-list">
             <p class="text-muted">Loading activities...</p>
           </div>
