@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const wrapper = document.createElement("div");
-    wrapper.className = "col-12 col-sm-6 col-md-4 col-xl-3"; // 响应式网格：手机1列，小屏2列，中屏3列，超宽4列
+    wrapper.className = "col-12 col-sm-6 col-lg-4 col-xxl-3"; // 响应式网格：手机1列，小屏2列，≥992 三列，≥1400 四列
     
     const activityCard = document.createElement("div");
     activityCard.className = "card activity-card h-100"; // h-100使卡片撑满网格容器
@@ -194,13 +194,13 @@ document.addEventListener("DOMContentLoaded", () => {
                   const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
                     ? `<button class="btn btn-sm btn-danger delete-btn p-0" style="width:20px; height:20px; line-height:1;" data-activity="${name}" data-email="${email}" title="Remove"><i class="fas fa-times"></i></button>`
                     : '';
-                  return `<span class="badge bg-info" style="font-size: 0.7rem; padding: 0.25rem 0.4rem;">${displayName}${deleteBtn}</span>`;
+                  return `<span class="badge bg-info font-student" style="font-size: 0.7rem; padding: 0.25rem 0.4rem;">${displayName}${deleteBtn}</span>`;
                 } else {
                   // 外部邮箱：单列显示
                   const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
                     ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
                     : '';
-                  return `<div class="mb-1 d-flex justify-content-between align-items-center"><span class="text-muted">${email}</span>${deleteBtn}</div>`;
+                  return `<div class="mb-1 d-flex justify-content-between align-items-center"><span class="text-muted font-student">${email}</span>${deleteBtn}</div>`;
                 }
               })
               .join("")}
@@ -210,13 +210,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     activityCard.innerHTML = `
       <div class="card-body d-flex flex-column">
-        <h5 class="card-title">${name}</h5>
+        <h5 class="card-title font-activity">${name}</h5>
         <p class="card-text flex-grow-1">${details.description}</p>
         <div class="mb-2 small">
           <p class="mb-1"><strong>📅 Schedule:</strong></p>
-          <p class="text-muted mb-2">${details.schedule}</p>
+          <p class="text-muted mb-2 font-schedule">${details.schedule}</p>
           <p class="mb-1"><strong>📍 Location:</strong></p>
-          <p class="text-muted">${details.location || 'TBD'}</p>
+          <p class="text-muted font-location">${details.location || 'TBD'}</p>
         </div>
         <div class="mb-3">
           <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
