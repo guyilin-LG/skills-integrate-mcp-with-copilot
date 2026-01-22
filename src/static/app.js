@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const loginModal = new bootstrap.Modal(document.getElementById("loginModal"));
   
+  // 过滤控件
+  const searchInput = document.getElementById("search-input");
+  const dayFilter = document.getElementById("day-filter");
+  const categoryFilter = document.getElementById("category-filter");
+  const sortSelect = document.getElementById("sort-select");
+  
   // Authentication state
   let currentTeacher = null;
   let authToken = null;
@@ -350,6 +356,101 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // 获取活动类别
+  function getActivityCategory(name) {
+    const sportsKeywords = ['soccer', 'basketball', 'gym'];
+    const academicKeywords = ['programming', 'math', 'chess'];
+    const artsKeywords = ['art', 'drama'];
+    
+    const nameLower = name.toLowerCase();
+    
+    if (sportsKeywords.some(keyword => nameLower.includes(keyword))) return 'sports';
+    if (academicKeywords.some(keyword => nameLower.includes(keyword))) return 'academic';
+    if (artsKeywords.some(keyword => nameLower.includes(keyword))) return 'arts';
+    return 'other';
+  }
+
+  // 过滤和排序函数
+  function applyFiltersAndSort() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedDay = dayFilter.value;
+    const selectedCategory = categoryFilter.value;
+    const sortBy = sortSelect.value;
+
+    // 过滤活动
+    let filtered = Object.entries(activitiesData).filter(([name, details]) => {
+      // 搜索过滤
+      const matchesSearch = name.toLowerCase().includes(searchTerm) || 
+                           details.description.toLowerCase().includes(searchTerm);
+      
+      // 星期几过滤
+      const matchesDay = !selectedDay || details.schedule.includes(selectedDay);
+      
+      // 类别过滤
+      const matchesCategory = !selectedCategory || getActivityCategory(name) === selectedCategory;
+      
+      return matchesSearch && matchesDay && matchesCategory;
+    });
+
+    // 排序
+    if (sortBy === "name") {
+      filtered.sort((a, b) => a[0].localeCompare(b[0]));
+    } else if (sortBy === "schedule") {
+      filtered.sort((a, b) => extractTimeValue(a[1].schedule) - extractTimeValue(b[1].schedule));
+    }
+
+    // 更新显示
+    document.querySelectorAll(".activity-card").forEach(card => {
+      card.style.display = "none";
+    });
+
+    filtered.forEach(([name, details]) => {
+      const card = activitiesList.querySelector(`[data-activity-name="${name}"]`);
+      if (card) {
+        card.style.display = "block";
+      }
+    });
+
+    // 无结果提示
+    const visibleCards = Array.from(document.querySelectorAll(".activity-card")).filter(card => card.style.display !== "none");
+    if (visibleCards.length === 0) {
+      if (!activitiesList.querySelector(".no-results")) {
+        const noResults = document.createElement("div");
+        noResults.className = "no-results alert alert-info";
+        noResults.innerHTML = '<i class="fas fa-info-circle"></i> No activities match your filters.';
+        activitiesList.appendChild(noResults);
+      }
+    } else {
+      const noResults = activitiesList.querySelector(".no-results");
+      if (noResults) noResults.remove();
+    }
+  }
+
+  // 从schedule中提取时间（分钟数）
+  function extractTimeValue(schedule) {
+    const match = schedule.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if (match) {
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const period = match[3] ? match[3].toUpperCase() : '';
+      
+      if (period === 'PM' && hours !== 12) {
+        hours += 12;
+      } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+      }
+      
+      return hours * 60 + minutes;
+    }
+    return 0;
+  }
+
+  // 事件监听
+  searchInput.addEventListener("input", applyFiltersAndSort);
+  dayFilter.addEventListener("change", applyFiltersAndSort);
+  categoryFilter.addEventListener("change", applyFiltersAndSort);
+  sortSelect.addEventListener("change", applyFiltersAndSort);
 
   // Initialize app
   checkAuthStatus();
