@@ -1,200 +1,233 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-}
-
+/* Custom styles for Mergington High School - works with Bootstrap 5 */
 body {
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f5f5f5;
+  color: #333;
 }
 
+/* 容器最大宽度设置 */
+.container-xxl {
+  max-width: 1600px !important;
+}
+
+/* Header styling */
 header {
-  text-align: center;
-  padding: 20px 0;
-  margin-bottom: 30px;
-  background-color: #1a237e;
-  color: white;
-  border-radius: 5px;
+  background-color: #1a237e !important;
+  position: relative;
 }
 
 header h1 {
-  margin-bottom: 10px;
+  font-weight: 700;
+  color: #00ff00;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-main {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  justify-content: center;
+header h2 {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-@media (min-width: 768px) {
-  main {
-    grid-template-columns: 2fr 1fr;
-  }
+/* User menu styling */
+#user-menu {
+  font-weight: 600;
+  border-color: #00ff00 !important;
+  color: #00ff00 !important;
+  transition: all 0.3s;
 }
 
-section {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 500px;
+#user-menu:hover {
+  background-color: rgba(0, 255, 0, 0.1);
 }
 
-section h3 {
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+.dropdown-menu-end {
+  background-color: #f8f9fa;
+}
+
+.dropdown-menu-end .dropdown-item:hover {
+  background-color: #e9ecef;
+}
+
+/* Activity section styling */
+main h3 {
   color: #1a237e;
+  font-weight: 600;
+  border-bottom: 2px solid #1a237e;
+  padding-bottom: 10px;
+  margin-bottom: 2rem;
 }
 
 .activity-card {
-  margin-bottom: 15px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #1a237e;
+  overflow: hidden;
 }
 
-.activity-card h4 {
-  margin-bottom: 10px;
-  color: #0066cc;
+.activity-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-4px);
+  border-left: 4px solid #00ff00;
 }
 
-.activity-card p {
-  margin-bottom: 8px;
-}
-
-/* New styles for participants section */
-.participants-container {
-  margin-top: 15px;
-  padding-top: 12px;
-  border-top: 1px dashed #ccc;
-}
-
-.participants-section h5 {
-  margin-bottom: 8px;
+.activity-card h5 {
   color: #1a237e;
-  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 
-.participants-section ul {
-  list-style-type: none;
-  padding-left: 5px;
+.activity-card .card-text {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.participants-section {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.participants-section h6 {
+  color: #1a237e;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .participants-section ul li {
-  padding: 4px 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-/* Remove the bullet point pseudo-element */
-.participants-section ul li::before {
-  display: none;
-}
-
-.participant-email {
-  flex-grow: 1;
-  margin-right: 8px;
+.participants-section ul li:last-child {
+  border-bottom: none;
 }
 
 .delete-btn {
-  background: none;
-  border: none;
-  color: #c62828;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 5px;
-  transition: all 0.2s;
-  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
 }
 
 .delete-btn:hover {
-  background-color: #ffebee;
+  opacity: 0.8;
 }
 
-.participants-section p {
-  color: #777;
-  font-style: italic;
+/* Register button styling */
+.register-btn {
+  background-color: #28a745;
+  border-color: #28a745;
+  font-weight: 600;
+  transition: all 0.3s;
 }
 
-.form-group {
-  margin-bottom: 15px;
+.register-btn:hover {
+  background-color: #218838;
+  border-color: #218838;
+  transform: scale(1.02);
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
+/* Form styling with Bootstrap overrides */
+.font-school {
+  font-family: 'Baloo Bhaijaan 2', cursive;
+  letter-spacing: 0.3px;
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
+.font-activity {
+  font-family: 'Fredoka One', cursive;
+  letter-spacing: 0.3px;
 }
 
-button {
-  background-color: #1a237e;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  font-size: 16px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+.font-schedule {
+  font-family: 'Quicksand', 'Nunito', sans-serif;
 }
 
-button:hover {
+.font-location {
+  font-family: 'Nunito', 'Quicksand', sans-serif;
+}
+
+.font-student {
+  font-family: 'Varela Round', 'Nunito', sans-serif;
+}
+
+.btn-primary:hover {
   background-color: #3949ab;
+  border-color: #3949ab;
 }
 
-.message {
-  margin-top: 20px;
-  padding: 10px;
-  border-radius: 4px;
-}
-
+/* Message/Alert styling */
 .success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #a5d6a7;
+  display: block;
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 20px;
+  border-radius: 4px;
+  border: 1px solid #c3e6cb;
+  margin-bottom: 1rem;
 }
 
 .error {
-  background-color: #ffebee;
-  color: #c62828;
-  border: 1px solid #ef9a9a;
+  display: block;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px 20px;
+  border-radius: 4px;
+  border: 1px solid #f5c6cb;
+  margin-bottom: 1rem;
 }
 
-.info {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
+/* Activity message styling */
+.activity-message {
+  padding: 12px 20px;
+  border-radius: 4px;
+  margin-top: 1rem;
 }
 
-.hidden {
-  display: none;
+.activity-message.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.activity-message.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
 footer {
-  text-align: center;
-  margin-top: 30px;
-  padding: 20px;
+  background-color: #f5f5f5;
   color: #666;
+}
+
+/* Handwritten font classes */
+.font-school {
+  font-family: 'Jua', sans-serif;
+  letter-spacing: 0.4px;
+}
+
+.font-activity {
+  font-family: 'Do Hyeon', sans-serif;
+  letter-spacing: 0.6px;
+  font-weight: 400;
+  font-size: 1.8rem;
+}
+
+.font-schedule {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 600;
+}
+
+.font-location {
+  font-family: 'Baloo 2', cursive;
+  font-weight: 600;
+}
+
+.font-student {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
 }
