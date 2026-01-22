@@ -14,11 +14,28 @@ from typing import Optional
 import os
 import json
 from pathlib import Path
+import hashlib
+import hmac
 
 # JWT configuration
 SECRET_KEY = "mergington-high-school-secret-key-learning-project"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+# Password hashing configuration
+PASSWORD_SALT = "mergington-high-school-salt-for-passwords"
+
+def hash_password(password: str) -> str:
+    """Hash password using HMAC-SHA256"""
+    return hmac.new(
+        PASSWORD_SALT.encode(),
+        password.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+def verify_password(stored_hash: str, provided_password: str) -> bool:
+    """Verify password against stored hash"""
+    return stored_hash == hash_password(provided_password)
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -99,7 +116,7 @@ def login(email: str = Query(...), password: str = Query(...)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     teacher = teachers[email]
-    if teacher["password"] != password:
+    if not verify_password(teacher["password"], password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": email, "name": teacher["name"]})

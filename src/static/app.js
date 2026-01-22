@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Authentication state
   let currentTeacher = null;
   let authToken = null;
+  let activitiesData = {}; // 缓存活动数据
 
   // Check if user was previously logged in
   function checkAuthStatus() {
@@ -35,14 +36,46 @@ document.addEventListener("DOMContentLoaded", () => {
       loginBtn.style.display = "none";
       logoutBtn.style.display = "block";
       logoutDivider.style.display = "block";
-      fetchActivities();
+      // 如果有缓存数据，重新渲染所有卡片（显示删除按钮）
+      if (Object.keys(activitiesData).length > 0) {
+        Object.entries(activitiesData).forEach(([name, details]) => {
+          updateActivityCard(name);
+        });
+      } else {
+        fetchActivities();
+      }
     } else {
       userStatus.textContent = "Login";
       loginBtn.style.display = "block";
       logoutBtn.style.display = "none";
       logoutDivider.style.display = "none";
-      fetchActivities();
+      // 如果有缓存数据，重新渲染所有卡片（隐藏删除按钮）
+      if (Object.keys(activitiesData).length > 0) {
+        Object.entries(activitiesData).forEach(([name, details]) => {
+          updateActivityCard(name);
+        });
+      } else {
+        fetchActivities();
+      }
     }
+  }
+
+  // Helper function to display messages on activity card
+  function showActivityMessage(activityName, text, className) {
+    const card = activitiesList.querySelector(`[data-activity-name="${activityName}"]`);
+    if (!card) return;
+    
+    const messageDiv = card.querySelector(".activity-message");
+    messageDiv.textContent = text;
+    messageDiv.className = `activity-message mt-3 ${className}`;
+    messageDiv.style.display = "block";
+    
+    setTimeout(() => {
+      if (messageDiv.classList.contains('success') || messageDiv.classList.contains('error')) {
+        messageDiv.style.display = "none";
+        messageDiv.innerHTML = '';
+      }
+    }, 5000);
   }
 
   // Helper function to display messages
@@ -118,169 +151,105 @@ document.addEventListener("DOMContentLoaded", () => {
     logout();
   });
 
-  // Function to fetch and update a single activity
-  async function updateSingleActivity(activityName) {
-    try {
-      const response = await fetch("/activities");
-      const activities = await response.json();
-      const details = activities[activityName];
-      
-      if (!details) {
-        console.error(`Activity ${activityName} not found`);
-        return;
-      }
+  // Function to render a single activity card
+  function renderActivityCard(name, details) {
+    const activityCard = document.createElement("div");
+    activityCard.className = "card activity-card mb-3";
+    activityCard.dataset.activityName = name; // 添加标识符
 
-      // Find the existing activity card
-      const allCards = activitiesList.querySelectorAll('.activity-card');
-      let targetCard = null;
-      let cardIndex = 0;
-      
-      allCards.forEach((card, index) => {
-        if (card.querySelector('.card-title').textContent === activityName) {
-          targetCard = card;
-          cardIndex = index;
-        }
-      });
+    const spotsLeft = details.max_participants - details.participants.length;
 
-      if (!targetCard) {
-        console.error(`Activity card for ${activityName} not found`);
-        return;
-      }
+    const instructorsHTML = details.instructors
+      ? details.instructors.map(email => 
+          `<li><strong>${getTeacherName(email)}</strong><br><small class="text-muted">${email}</small></li>`
+        ).join("")
+      : "<li><em>No instructors assigned</em></li>";
 
-      // Create updated card
-      const spotsLeft = details.max_participants - details.participants.length;
+    const participantsHTML =
+      details.participants.length > 0
+        ? `<div class="participants-section mt-3">
+          <h6 class="mb-2">Participants (${details.participants.length}/${details.max_participants}):</h6>
+          <ul class="list-unstyled small">
+            ${details.participants
+              .map((email) => {
+                const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
+                  ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
+                  : '';
+                return `<li class="mb-1 d-flex justify-content-between align-items-center"><span>${email}</span>${deleteBtn}</li>`;
+              })
+              .join("")}
+          </ul>
+        </div>`
+        : `<p class="text-muted small">No participants yet</p>`;
 
-      const instructorsHTML = details.instructors
-        ? details.instructors.map(email => 
-            `<li><strong>${getTeacherName(email)}</strong><br><small class="text-muted">${email}</small></li>`
-          ).join("")
-        : "<li><em>No instructors assigned</em></li>";
-
-      const participantsHTML =
-        details.participants.length > 0
-          ? `<div class="participants-section mt-3">
-            <h6 class="mb-2">Participants (${details.participants.length}/${details.max_participants}):</h6>
-            <ul class="list-unstyled small">
-              ${details.participants
-                .map((email) => {
-                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
-                    ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${activityName}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
-                    : '';
-                  return `<li class="mb-1 d-flex justify-content-between align-items-center"><span>${email}</span>${deleteBtn}</li>`;
-                })
-                .join("")}
-            </ul>
-          </div>`
-          : `<p class="text-muted small">No participants yet</p>`;
-
-      targetCard.innerHTML = `
-        <div class="card-body">
-          <h5 class="card-title">${activityName}</h5>
-          <p class="card-text">${details.description}</p>
-          <div class="row g-2 mb-3">
-            <div class="col-sm-6">
-              <p class="mb-1"><strong>📅 Schedule:</strong></p>
-              <p class="text-muted small">${details.schedule}</p>
-            </div>
-            <div class="col-sm-6">
-              <p class="mb-1"><strong>📍 Location:</strong></p>
-              <p class="text-muted small">${details.location || 'TBD'}</p>
-            </div>
+    activityCard.innerHTML = `
+      <div class="card-body">
+        <h5 class="card-title">${name}</h5>
+        <p class="card-text">${details.description}</p>
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <p class="mb-1"><strong>📅 Schedule:</strong></p>
+            <p class="text-muted small">${details.schedule}</p>
           </div>
-          <div class="mb-3">
-            <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
-            <ul class="list-unstyled small">
-              ${instructorsHTML}
-            </ul>
+          <div class="col-sm-6">
+            <p class="mb-1"><strong>📍 Location:</strong></p>
+            <p class="text-muted small">${details.location || 'TBD'}</p>
           </div>
-          <p class="mb-0"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
-          ${participantsHTML}
         </div>
-      `;
+        <div class="mb-3">
+          <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
+          <ul class="list-unstyled small">
+            ${instructorsHTML}
+          </ul>
+        </div>
+        <p class="mb-0"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
+        ${participantsHTML}
+        <div class="activity-message mt-3" style="display: none;"></div>
+      </div>
+    `;
 
-      // Re-bind delete button events for this card
-      targetCard.querySelectorAll(".delete-btn").forEach((button) => {
-        button.addEventListener("click", handleUnregister);
-      });
-    } catch (error) {
-      console.error("Error updating activity:", error);
-    }
+    // 绑定删除按钮事件
+    activityCard.querySelectorAll(".delete-btn").forEach((button) => {
+      button.addEventListener("click", handleUnregister);
+    });
+
+    return activityCard;
   }
 
+  // Function to update a single activity card (no HTTP request!)
+  function updateActivityCard(activityName) {
+    const details = activitiesData[activityName];
+    if (!details) return;
+
+    // 找到现有的卡片
+    const existingCard = activitiesList.querySelector(`[data-activity-name="${activityName}"]`);
+    if (!existingCard) return;
+
+    // 创建新卡片并替换
+    const newCard = renderActivityCard(activityName, details);
+    existingCard.replaceWith(newCard);
+  }
+
+  // Function to fetch and update a single activity
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
-      const activities = await response.json();
+      activitiesData = await response.json(); // 缓存数据
 
       activitiesList.innerHTML = "";
       activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
-      Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "card activity-card mb-3";
-
-        const spotsLeft = details.max_participants - details.participants.length;
-
-        // Format instructors with their names
-        const instructorsHTML = details.instructors
-          ? details.instructors.map(email => 
-              `<li><strong>${getTeacherName(email)}</strong><br><small class="text-muted">${email}</small></li>`
-            ).join("")
-          : "<li><em>No instructors assigned</em></li>";
-
-        const participantsHTML =
-          details.participants.length > 0
-            ? `<div class="participants-section mt-3">
-              <h6 class="mb-2">Participants (${details.participants.length}/${details.max_participants}):</h6>
-              <ul class="list-unstyled small">
-                ${details.participants
-                  .map((email) => {
-                    const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
-                      ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
-                      : '';
-                    return `<li class="mb-1 d-flex justify-content-between align-items-center"><span>${email}</span>${deleteBtn}</li>`;
-                  })
-                  .join("")}
-              </ul>
-            </div>`
-            : `<p class="text-muted small">No participants yet</p>`;
-
-        activityCard.innerHTML = `
-          <div class="card-body">
-            <h5 class="card-title">${name}</h5>
-            <p class="card-text">${details.description}</p>
-            <div class="row g-2 mb-3">
-              <div class="col-sm-6">
-                <p class="mb-1"><strong>📅 Schedule:</strong></p>
-                <p class="text-muted small">${details.schedule}</p>
-              </div>
-              <div class="col-sm-6">
-                <p class="mb-1"><strong>📍 Location:</strong></p>
-                <p class="text-muted small">${details.location || 'TBD'}</p>
-              </div>
-            </div>
-            <div class="mb-3">
-              <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
-              <ul class="list-unstyled small">
-                ${instructorsHTML}
-              </ul>
-            </div>
-            <p class="mb-0"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
-            ${participantsHTML}
-          </div>
-        `;
-
+      Object.entries(activitiesData).forEach(([name, details]) => {
+        // 使用新的渲染函数
+        const activityCard = renderActivityCard(name, details);
         activitiesList.appendChild(activityCard);
 
+        // 添加到下拉列表
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
-      });
-
-      document.querySelectorAll(".delete-btn").forEach((button) => {
-        button.addEventListener("click", handleUnregister);
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
@@ -326,19 +295,26 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        showMessage(result.message, "success");
-        updateSingleActivity(activity); // 只更新这个活动
+        // 直接在前端更新数据（无需HTTP请求）
+        if (activitiesData[activity]) {
+          activitiesData[activity].participants = 
+            activitiesData[activity].participants.filter(p => p !== email);
+          updateActivityCard(activity);
+          // 在活动卡片下显示成功消息
+          showActivityMessage(activity, result.message, "alert alert-success");
+        }
       } else if (response.status === 401) {
-        showMessage("Session expired. Please login again.", "error");
+        showActivityMessage(activity, "Session expired. Please login again.", "alert alert-danger");
         logout();
-        updateSingleActivity(activity);
+        // 会话过期后重新获取数据
+        await fetchActivities();
       } else if (response.status === 403) {
-        showMessage("You are not authorized to unregister from this activity", "error");
+        showActivityMessage(activity, "You are not authorized to unregister from this activity", "alert alert-danger");
       } else {
-        showMessage(result.detail || "An error occurred", "error");
+        showActivityMessage(activity, result.detail || "An error occurred", "alert alert-danger");
       }
     } catch (error) {
-      showMessage("Failed to unregister. Please try again.", "error");
+      showActivityMessage(activity, "Failed to unregister. Please try again.", "alert alert-danger");
       console.error("Error unregistering:", error);
     }
   }
@@ -360,8 +336,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         showMessage(result.message, "success");
+        // 直接在前端更新数据（无需HTTP请求）
+        if (activitiesData[activity]) {
+          activitiesData[activity].participants.push(email);
+          updateActivityCard(activity);
+        }
         signupForm.reset();
-        updateSingleActivity(activity); // 只更新这个活动
       } else {
         showMessage(result.detail || "An error occurred", "error");
       }
