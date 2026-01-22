@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const wrapper = document.createElement("div");
-    wrapper.className = "col-12 col-sm-6 col-lg-4 col-xxl-3"; // 响应式网格：手机1列，小屏2列，≥992 三列，≥1400 四列
+    wrapper.className = "col-12 col-sm-6 col-xl-4 col-xxl-3"; // 响应式网格：手机1列，小屏2列，≥1200 三列，≥1400 四列
     
     const activityCard = document.createElement("div");
     activityCard.className = "card activity-card h-100"; // h-100使卡片撑满网格容器
@@ -208,13 +208,19 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>`
         : `<p class="text-muted small">No participants yet</p>`;
 
+    // 拆分星期几和时间
+    const scheduleParts = details.schedule.split(',').map(s => s.trim());
+    const dayOfWeek = scheduleParts[0] || details.schedule;
+    const timeSlot = scheduleParts[1] || '';
+
     activityCard.innerHTML = `
       <div class="card-body d-flex flex-column">
         <h5 class="card-title font-activity">${name}</h5>
         <p class="card-text flex-grow-1">${details.description}</p>
         <div class="mb-2 small">
           <p class="mb-1"><strong>📅 Schedule:</strong></p>
-          <p class="text-muted mb-2 font-schedule">${details.schedule}</p>
+          <p class="text-muted mb-0 font-schedule">${dayOfWeek}</p>
+          ${timeSlot ? `<p class="text-muted mb-2 font-schedule">${timeSlot}</p>` : '<p class="mb-2"></p>'}
           <p class="mb-1"><strong>📍 Location:</strong></p>
           <p class="text-muted font-location">${details.location || 'TBD'}</p>
         </div>
@@ -452,30 +458,27 @@ document.addEventListener("DOMContentLoaded", () => {
       filtered.sort((a, b) => extractTimeValue(a[1].schedule) - extractTimeValue(b[1].schedule));
     }
 
-    // 更新显示
-    document.querySelectorAll(".activity-card").forEach(card => {
-      card.style.display = "none";
-    });
-
-    filtered.forEach(([name, details]) => {
+    // 按过滤和排序结果重新排列 DOM，避免留下空列
+    const fragment = document.createDocumentFragment();
+    filtered.forEach(([name]) => {
       const card = activitiesList.querySelector(`[data-activity-name="${name}"]`);
-      if (card) {
-        card.style.display = "block";
+      const wrapper = card ? card.parentElement : null; // wrapper 是列容器
+      if (wrapper) {
+        wrapper.style.display = "";
+        fragment.appendChild(wrapper);
       }
     });
+
+    // 清空并按顺序插入
+    activitiesList.innerHTML = "";
+    activitiesList.appendChild(fragment);
 
     // 无结果提示
-    const visibleCards = Array.from(document.querySelectorAll(".activity-card")).filter(card => card.style.display !== "none");
-    if (visibleCards.length === 0) {
-      if (!activitiesList.querySelector(".no-results")) {
-        const noResults = document.createElement("div");
-        noResults.className = "no-results alert alert-info";
-        noResults.innerHTML = '<i class="fas fa-info-circle"></i> No activities match your filters.';
-        activitiesList.appendChild(noResults);
-      }
-    } else {
-      const noResults = activitiesList.querySelector(".no-results");
-      if (noResults) noResults.remove();
+    if (filtered.length === 0) {
+      const noResults = document.createElement("div");
+      noResults.className = "no-results alert alert-info col-12";
+      noResults.innerHTML = '<i class="fas fa-info-circle"></i> No activities match your filters.';
+      activitiesList.appendChild(noResults);
     }
   }
 
