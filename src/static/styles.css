@@ -5,6 +5,11 @@ body {
   color: #333;
 }
 
+/* 容器最大宽度设置 */
+.container-xxl {
+  max-width: 1600px !important;
+}
+
 /* Header styling */
 header {
   background-color: #1a237e !important;
@@ -43,21 +48,25 @@ header h2 {
 }
 
 /* Activity section styling */
-section h3 {
+main h3 {
   color: #1a237e;
   font-weight: 600;
   border-bottom: 2px solid #1a237e;
   padding-bottom: 10px;
+  margin-bottom: 2rem;
 }
 
 .activity-card {
   transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
   border-left: 4px solid #1a237e;
+  overflow: hidden;
 }
 
 .activity-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-4px);
+  border-left: 4px solid #00ff00;
 }
 
 .activity-card h5 {
@@ -106,6 +115,20 @@ section h3 {
 
 .delete-btn:hover {
   opacity: 0.8;
+}
+
+/* Register button styling */
+.register-btn {
+  background-color: #28a745;
+  border-color: #28a745;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.register-btn:hover {
+  background-color: #218838;
+  border-color: #218838;
+  transform: scale(1.02);
 }
 
 /* Form styling with Bootstrap overrides */

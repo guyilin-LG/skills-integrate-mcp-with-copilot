@@ -162,8 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to render a single activity card
   function renderActivityCard(name, details) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "col-12 col-sm-6 col-md-4 col-xl-3"; // 响应式网格：手机1列，小屏2列，中屏3列，超宽4列
+    
     const activityCard = document.createElement("div");
-    activityCard.className = "card activity-card mb-3";
+    activityCard.className = "card activity-card h-100"; // h-100使卡片撑满网格容器
     activityCard.dataset.activityName = name; // 添加标识符
 
     const spotsLeft = details.max_participants - details.participants.length;
@@ -192,17 +195,17 @@ document.addEventListener("DOMContentLoaded", () => {
         : `<p class="text-muted small">No participants yet</p>`;
 
     activityCard.innerHTML = `
-      <div class="card-body">
+      <div class="card-body d-flex flex-column">
         <h5 class="card-title">${name}</h5>
-        <p class="card-text">${details.description}</p>
-        <div class="row g-2 mb-3">
+        <p class="card-text flex-grow-1">${details.description}</p>
+        <div class="row g-2 mb-3 small">
           <div class="col-sm-6">
             <p class="mb-1"><strong>📅 Schedule:</strong></p>
-            <p class="text-muted small">${details.schedule}</p>
+            <p class="text-muted">${details.schedule}</p>
           </div>
           <div class="col-sm-6">
             <p class="mb-1"><strong>📍 Location:</strong></p>
-            <p class="text-muted small">${details.location || 'TBD'}</p>
+            <p class="text-muted">${details.location || 'TBD'}</p>
           </div>
         </div>
         <div class="mb-3">
@@ -211,8 +214,15 @@ document.addEventListener("DOMContentLoaded", () => {
             ${instructorsHTML}
           </ul>
         </div>
-        <p class="mb-0"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
+        <p class="mb-3"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
         ${participantsHTML}
+        
+        <div class="mt-3 d-grid gap-2">
+          <button class="btn btn-success register-btn" data-activity="${name}" data-bs-toggle="modal" data-bs-target="#signupModal">
+            <i class="fas fa-user-plus me-2"></i>Register
+          </button>
+        </div>
+        
         <div class="activity-message mt-3" style="display: none;"></div>
       </div>
     `;
@@ -221,8 +231,14 @@ document.addEventListener("DOMContentLoaded", () => {
     activityCard.querySelectorAll(".delete-btn").forEach((button) => {
       button.addEventListener("click", handleUnregister);
     });
+    
+    // 绑定注册按钮事件
+    activityCard.querySelector(".register-btn").addEventListener("click", (e) => {
+      document.getElementById("activity").value = name;
+    });
 
-    return activityCard;
+    wrapper.appendChild(activityCard);
+    return wrapper;
   }
 
   // Function to update a single activity card (no HTTP request!)
@@ -230,29 +246,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const details = activitiesData[activityName];
     if (!details) return;
 
-    // 找到现有的卡片
-    const existingCard = activitiesList.querySelector(`[data-activity-name="${activityName}"]`);
-    if (!existingCard) return;
+    // 找到现有的卡片包装器
+    const activitiesContainer = document.getElementById("activities-list");
+    const existingWrapper = Array.from(activitiesContainer.children).find(child => 
+      child.querySelector(`[data-activity-name="${activityName}"]`)
+    );
+    
+    if (!existingWrapper) return;
 
     // 创建新卡片并替换
-    const newCard = renderActivityCard(activityName, details);
-    existingCard.replaceWith(newCard);
+    const newCardWrapper = renderActivityCard(activityName, details);
+    existingWrapper.replaceWith(newCardWrapper);
   }
 
-  // Function to fetch and update a single activity
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       activitiesData = await response.json(); // 缓存数据
 
-      activitiesList.innerHTML = "";
+      activitiesList.innerHTML = ""; // 清空之前的卡片
       activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       Object.entries(activitiesData).forEach(([name, details]) => {
         // 使用新的渲染函数
-        const activityCard = renderActivityCard(name, details);
-        activitiesList.appendChild(activityCard);
+        const activityCardWrapper = renderActivityCard(name, details);
+        activitiesList.appendChild(activityCardWrapper);
 
         // 添加到下拉列表
         const option = document.createElement("option");
@@ -261,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
         activitySelect.appendChild(option);
       });
     } catch (error) {
-      activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
+      activitiesList.innerHTML = "<p class='text-danger col-12'>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
   }
@@ -344,11 +363,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        showMessage(result.message, "success");
+        // 关闭弹窗
+        const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
+        if (signupModal) signupModal.hide();
+
         // 直接在前端更新数据（无需HTTP请求）
         if (activitiesData[activity]) {
           activitiesData[activity].participants.push(email);
           updateActivityCard(activity);
+          // 在更新后的卡片上显示成功消息（避免被重渲染覆盖）
+          showActivityMessage(activity, result.message, "alert alert-success");
         }
         signupForm.reset();
       } else {
