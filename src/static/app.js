@@ -76,11 +76,12 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.className = `activity-message mt-3 ${className}`;
     messageDiv.style.display = "block";
     
-    setTimeout(() => {
-      if (messageDiv.classList.contains('success') || messageDiv.classList.contains('error')) {
-        messageDiv.style.display = "none";
-        messageDiv.innerHTML = '';
-      }
+    // Clear message after 5 seconds
+    if (messageDiv.clearTimeout) clearTimeout(messageDiv.clearTimeout);
+    messageDiv.clearTimeout = setTimeout(() => {
+      messageDiv.style.display = "none";
+      messageDiv.className = "activity-message mt-3"; // 完全清除className中的success/error/alert
+      messageDiv.textContent = '';
     }, 5000);
   }
 
@@ -88,10 +89,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function showMessage(text, className) {
     messageDiv.textContent = text;
     messageDiv.className = className;
-    setTimeout(() => {
-      if (messageDiv.classList.contains('success') || messageDiv.classList.contains('error')) {
-        messageDiv.innerHTML = '';
-      }
+    
+    // Clear message after 5 seconds
+    if (messageDiv.clearTimeout) clearTimeout(messageDiv.clearTimeout);
+    messageDiv.clearTimeout = setTimeout(() => {
+      messageDiv.className = ''; // 完全清除className
+      messageDiv.innerHTML = '';
     }, 5000);
   }
 
