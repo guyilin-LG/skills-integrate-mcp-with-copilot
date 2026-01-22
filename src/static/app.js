@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const sortSelect = document.getElementById("sort-select");
   
   // Authentication state
+  const API_BASE = window.location.origin.includes('8000') ? '' : 'http://127.0.0.1:8000';
+  
   let currentTeacher = null;
   let authToken = null;
   let activitiesData = {}; // 缓存活动数据
@@ -33,15 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Update user status in header
   function updateUserStatus() {
     const userStatus = document.getElementById("user-status");
-    const loginBtn = document.getElementById("login-btn");
+    const userMenuBtn = document.getElementById("user-menu");
     const logoutBtn = document.getElementById("logout-btn");
-    const logoutDivider = document.getElementById("logout-divider");
 
     if (currentTeacher) {
       userStatus.textContent = currentTeacher.name;
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "block";
-      logoutDivider.style.display = "block";
+      userStatus.style.display = "inline";
+      userMenuBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
       // 如果有缓存数据，重新渲染所有卡片（显示删除按钮）
       if (Object.keys(activitiesData).length > 0) {
         Object.entries(activitiesData).forEach(([name, details]) => {
@@ -51,10 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchActivities();
       }
     } else {
-      userStatus.textContent = "Login";
-      loginBtn.style.display = "block";
+      userStatus.style.display = "none";
+      userMenuBtn.style.display = "inline-block";
       logoutBtn.style.display = "none";
-      logoutDivider.style.display = "none";
       // 如果有缓存数据，重新渲染所有卡片（隐藏删除按钮）
       if (Object.keys(activitiesData).length > 0) {
         Object.entries(activitiesData).forEach(([name, details]) => {
@@ -179,18 +179,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const participantsHTML =
       details.participants.length > 0
-        ? `<div class="participants-section mt-3">
-          <h6 class="mb-2">Participants (${details.participants.length}/${details.max_participants}):</h6>
-          <ul class="list-unstyled small">
+        ? `<div class="mt-3">
+          <p class="mb-2"><small><strong>Participants (${details.participants.length}/${details.max_participants}):</strong></small></p>
+          <div class="d-flex flex-wrap gap-2">
             ${details.participants
               .map((email) => {
-                const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
-                  ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
-                  : '';
-                return `<li class="mb-1 d-flex justify-content-between align-items-center"><span>${email}</span>${deleteBtn}</li>`;
+                const isMergingtonEmail = email.includes('@mergington.edu');
+                const displayName = isMergingtonEmail 
+                  ? email.split('@')[0].replace(/\./g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                  : email;
+                
+                if (isMergingtonEmail) {
+                  // 学校邮箱：显示标签
+                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
+                    ? `<button class="btn btn-sm btn-danger delete-btn p-0" style="width:20px; height:20px; line-height:1;" data-activity="${name}" data-email="${email}" title="Remove"><i class="fas fa-times"></i></button>`
+                    : '';
+                  return `<span class="badge bg-info" style="font-size: 0.7rem; padding: 0.25rem 0.4rem;">${displayName}${deleteBtn}</span>`;
+                } else {
+                  // 外部邮箱：单列显示
+                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
+                    ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
+                    : '';
+                  return `<div class="mb-1 d-flex justify-content-between align-items-center"><span class="text-muted">${email}</span>${deleteBtn}</div>`;
+                }
               })
               .join("")}
-          </ul>
+          </div>
         </div>`
         : `<p class="text-muted small">No participants yet</p>`;
 
@@ -198,15 +212,11 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="card-body d-flex flex-column">
         <h5 class="card-title">${name}</h5>
         <p class="card-text flex-grow-1">${details.description}</p>
-        <div class="row g-2 mb-3 small">
-          <div class="col-sm-6">
-            <p class="mb-1"><strong>📅 Schedule:</strong></p>
-            <p class="text-muted">${details.schedule}</p>
-          </div>
-          <div class="col-sm-6">
-            <p class="mb-1"><strong>📍 Location:</strong></p>
-            <p class="text-muted">${details.location || 'TBD'}</p>
-          </div>
+        <div class="mb-2 small">
+          <p class="mb-1"><strong>📅 Schedule:</strong></p>
+          <p class="text-muted mb-2">${details.schedule}</p>
+          <p class="mb-1"><strong>📍 Location:</strong></p>
+          <p class="text-muted">${details.location || 'TBD'}</p>
         </div>
         <div class="mb-3">
           <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
@@ -218,9 +228,14 @@ document.addEventListener("DOMContentLoaded", () => {
         ${participantsHTML}
         
         <div class="mt-3 d-grid gap-2">
-          <button class="btn btn-success register-btn" data-activity="${name}" data-bs-toggle="modal" data-bs-target="#signupModal">
-            <i class="fas fa-user-plus me-2"></i>Register
-          </button>
+          ${spotsLeft > 0 
+            ? `<button class="btn btn-success register-btn" data-activity="${name}" data-bs-toggle="modal" data-bs-target="#signupModal">
+                <i class="fas fa-user-plus me-2"></i>Register
+              </button>`
+            : `<button class="btn btn-secondary" disabled>
+                <i class="fas fa-lock me-2"></i>Activity Full
+              </button>`
+          }
         </div>
         
         <div class="activity-message mt-3" style="display: none;"></div>
@@ -232,10 +247,13 @@ document.addEventListener("DOMContentLoaded", () => {
       button.addEventListener("click", handleUnregister);
     });
     
-    // 绑定注册按钮事件
-    activityCard.querySelector(".register-btn").addEventListener("click", (e) => {
-      document.getElementById("activity").value = name;
-    });
+    // 绑定注册按钮事件（仅当有空位时存在该按钮）
+    const registerBtn = activityCard.querySelector(".register-btn");
+    if (registerBtn) {
+      registerBtn.addEventListener("click", (e) => {
+        document.getElementById("activity").value = name;
+      });
+    }
 
     wrapper.appendChild(activityCard);
     return wrapper;
@@ -262,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      const response = await fetch(`${API_BASE}/activities`);
       activitiesData = await response.json(); // 缓存数据
 
       activitiesList.innerHTML = ""; // 清空之前的卡片
@@ -311,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch(
-        `/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+        `${API_BASE}${API_BASE}/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
         {
           method: "DELETE",
           headers: {
@@ -354,9 +372,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
 
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showMessage("Please enter a valid email address", "error");
+      return;
+    }
+
     try {
       const response = await fetch(
-        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+        `${API_BASE}${API_BASE}/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
         { method: "POST" }
       );
 
@@ -481,4 +506,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   checkAuthStatus();
+  
+  // Initialize demo data on first load
+  async function initializeDemoData() {
+    try {
+      const response = await fetch(`${API_BASE}/initialize-demo-data`, { method: "POST" });
+      if (response.ok) {
+        console.log("Demo data initialized");
+        fetchActivities();
+      }
+    } catch (error) {
+      console.log("Demo data already initialized or error:", error);
+      fetchActivities();
+    }
+  }
+  
+  // 仅在首次加载时初始化数据
+  if (!localStorage.getItem("demoDataInitialized")) {
+    initializeDemoData();
+    localStorage.setItem("demoDataInitialized", "true");
+  } else {
+    fetchActivities();
+  }
 });
