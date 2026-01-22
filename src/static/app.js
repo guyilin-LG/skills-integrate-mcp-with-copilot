@@ -3,16 +3,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  let messageTimeoutId = null;
 
   // Helper function to display messages
   function showMessage(text, className) {
+    // Clear any existing auto-clear timer so older messages don't clear newer ones
+    if (messageTimeoutId !== null) {
+      clearTimeout(messageTimeoutId);
+      messageTimeoutId = null;
+    }
+
     messageDiv.textContent = text;
     messageDiv.className = className;
     // Don't hide, let Bootstrap styling handle it
-    setTimeout(() => {
+    messageTimeoutId = setTimeout(() => {
       if (messageDiv.classList.contains('success') || messageDiv.classList.contains('error')) {
-        messageDiv.innerHTML = '';
+        // Clear both content and styling state
+        messageDiv.textContent = '';
+        messageDiv.className = '';
       }
+      messageTimeoutId = null;
     }, 5000);
   }
 
