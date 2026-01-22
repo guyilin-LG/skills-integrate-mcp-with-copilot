@@ -118,6 +118,95 @@ document.addEventListener("DOMContentLoaded", () => {
     logout();
   });
 
+  // Function to fetch and update a single activity
+  async function updateSingleActivity(activityName) {
+    try {
+      const response = await fetch("/activities");
+      const activities = await response.json();
+      const details = activities[activityName];
+      
+      if (!details) {
+        console.error(`Activity ${activityName} not found`);
+        return;
+      }
+
+      // Find the existing activity card
+      const allCards = activitiesList.querySelectorAll('.activity-card');
+      let targetCard = null;
+      let cardIndex = 0;
+      
+      allCards.forEach((card, index) => {
+        if (card.querySelector('.card-title').textContent === activityName) {
+          targetCard = card;
+          cardIndex = index;
+        }
+      });
+
+      if (!targetCard) {
+        console.error(`Activity card for ${activityName} not found`);
+        return;
+      }
+
+      // Create updated card
+      const spotsLeft = details.max_participants - details.participants.length;
+
+      const instructorsHTML = details.instructors
+        ? details.instructors.map(email => 
+            `<li><strong>${getTeacherName(email)}</strong><br><small class="text-muted">${email}</small></li>`
+          ).join("")
+        : "<li><em>No instructors assigned</em></li>";
+
+      const participantsHTML =
+        details.participants.length > 0
+          ? `<div class="participants-section mt-3">
+            <h6 class="mb-2">Participants (${details.participants.length}/${details.max_participants}):</h6>
+            <ul class="list-unstyled small">
+              ${details.participants
+                .map((email) => {
+                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
+                    ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${activityName}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
+                    : '';
+                  return `<li class="mb-1 d-flex justify-content-between align-items-center"><span>${email}</span>${deleteBtn}</li>`;
+                })
+                .join("")}
+            </ul>
+          </div>`
+          : `<p class="text-muted small">No participants yet</p>`;
+
+      targetCard.innerHTML = `
+        <div class="card-body">
+          <h5 class="card-title">${activityName}</h5>
+          <p class="card-text">${details.description}</p>
+          <div class="row g-2 mb-3">
+            <div class="col-sm-6">
+              <p class="mb-1"><strong>📅 Schedule:</strong></p>
+              <p class="text-muted small">${details.schedule}</p>
+            </div>
+            <div class="col-sm-6">
+              <p class="mb-1"><strong>📍 Location:</strong></p>
+              <p class="text-muted small">${details.location || 'TBD'}</p>
+            </div>
+          </div>
+          <div class="mb-3">
+            <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
+            <ul class="list-unstyled small">
+              ${instructorsHTML}
+            </ul>
+          </div>
+          <p class="mb-0"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
+          ${participantsHTML}
+        </div>
+      `;
+
+      // Re-bind delete button events for this card
+      targetCard.querySelectorAll(".delete-btn").forEach((button) => {
+        button.addEventListener("click", handleUnregister);
+      });
+    } catch (error) {
+      console.error("Error updating activity:", error);
+    }
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -238,11 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         showMessage(result.message, "success");
-        fetchActivities();
+        updateSingleActivity(activity); // 只更新这个活动
       } else if (response.status === 401) {
         showMessage("Session expired. Please login again.", "error");
         logout();
-        fetchActivities();
+        updateSingleActivity(activity);
       } else if (response.status === 403) {
         showMessage("You are not authorized to unregister from this activity", "error");
       } else {
@@ -272,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         showMessage(result.message, "success");
         signupForm.reset();
-        fetchActivities();
+        updateSingleActivity(activity); // 只更新这个活动
       } else {
         showMessage(result.detail || "An error occurred", "error");
       }
