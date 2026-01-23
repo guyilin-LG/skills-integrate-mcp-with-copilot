@@ -3,370 +3,109 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
-  const loginForm = document.getElementById("login-form");
-  const loginModal = new bootstrap.Modal(document.getElementById("loginModal"));
-  
-  // 过滤控件
-  const searchInput = document.getElementById("search-input");
-  const dayFilter = document.getElementById("day-filter");
-  const categoryFilter = document.getElementById("category-filter");
-  const sortSelect = document.getElementById("sort-select");
-  
-  // Authentication state
-  const API_BASE = window.location.origin.includes('8000') ? '' : 'http://127.0.0.1:8000';
-  
-  let currentTeacher = null;
-  let authToken = null;
-  let activitiesData = {}; // 缓存活动数据
-
-  // Check if user was previously logged in
-  function checkAuthStatus() {
-    const token = localStorage.getItem("authToken");
-    const teacher = localStorage.getItem("currentTeacher");
-    
-    if (token && teacher) {
-      authToken = token;
-      currentTeacher = JSON.parse(teacher);
-    }
-    // Always update status and load activities, regardless of login status
-    updateUserStatus();
-  }
-
-  // Update user status in header
-  function updateUserStatus() {
-    const userStatus = document.getElementById("user-status");
-    const userMenuBtn = document.getElementById("user-menu");
-    const logoutBtn = document.getElementById("logout-btn");
-
-    if (currentTeacher) {
-      userStatus.textContent = currentTeacher.name;
-      userStatus.style.display = "inline";
-      userMenuBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
-      // 如果有缓存数据，重新渲染所有卡片（显示删除按钮）
-      if (Object.keys(activitiesData).length > 0) {
-        Object.entries(activitiesData).forEach(([name, details]) => {
-          updateActivityCard(name);
-        });
-      } else {
-        fetchActivities();
-      }
-    } else {
-      userStatus.style.display = "none";
-      userMenuBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-      // 如果有缓存数据，重新渲染所有卡片（隐藏删除按钮）
-      if (Object.keys(activitiesData).length > 0) {
-        Object.entries(activitiesData).forEach(([name, details]) => {
-          updateActivityCard(name);
-        });
-      } else {
-        fetchActivities();
-      }
-    }
-  }
-
-  // Helper function to display messages on activity card
-  function showActivityMessage(activityName, text, className) {
-    const card = activitiesList.querySelector(`[data-activity-name="${activityName}"]`);
-    if (!card) return;
-    
-    const messageDiv = card.querySelector(".activity-message");
-    messageDiv.textContent = text;
-    messageDiv.className = `activity-message mt-3 ${className}`;
-    messageDiv.style.display = "block";
-    
-    // Clear message after 5 seconds
-    if (messageDiv.clearTimeout) clearTimeout(messageDiv.clearTimeout);
-    messageDiv.clearTimeout = setTimeout(() => {
-      messageDiv.style.display = "none";
-      messageDiv.className = "activity-message mt-3"; // 完全清除className中的success/error/alert
-      messageDiv.textContent = '';
-    }, 5000);
-  }
-
-  // Helper function to display messages
-  function showMessage(text, className) {
-    messageDiv.textContent = text;
-    messageDiv.className = className;
-    
-    // Clear message after 5 seconds
-    if (messageDiv.clearTimeout) clearTimeout(messageDiv.clearTimeout);
-    messageDiv.clearTimeout = setTimeout(() => {
-      messageDiv.className = ''; // 完全清除className
-      messageDiv.innerHTML = '';
-    }, 5000);
-  }
-
-  // Handle login
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const email = document.getElementById("login-email").value;
-    const password = document.getElementById("login-password").value;
-
-    try {
-      const response = await fetch(
-        `/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
-        { method: "POST" }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        authToken = result.access_token;
-        currentTeacher = {
-          name: result.teacher_name,
-          email: result.email
-        };
-
-        // Store in localStorage
-        localStorage.setItem("authToken", authToken);
-        localStorage.setItem("currentTeacher", JSON.stringify(currentTeacher));
-
-        document.getElementById("login-message").innerHTML = '';
-        loginForm.reset();
-        loginModal.hide();
-        updateUserStatus();
-        fetchActivities();
-      } else {
-        let errorMsg = "Login failed";
-        try {
-          const result = await response.json();
-          errorMsg = result.detail || errorMsg;
-        } catch (e) {
-          // Response was not JSON
-        }
-        document.getElementById("login-message").textContent = errorMsg;
-        document.getElementById("login-message").className = "alert alert-danger";
-      }
-    } catch (error) {
-      document.getElementById("login-message").textContent = "Network error. Please try again.";
-      document.getElementById("login-message").className = "alert alert-danger";
-      console.error("Error logging in:", error);
-    }
-  });
-
-  // Handle logout
-  function logout() {
-    authToken = null;
-    currentTeacher = null;
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("currentTeacher");
-    updateUserStatus();
-  }
-
-  document.getElementById("logout-btn").addEventListener("click", (event) => {
-    event.preventDefault();
-    logout();
-  });
-
-  // Function to render a single activity card
-  function renderActivityCard(name, details) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "col-12 col-sm-6 col-xl-4 col-xxl-3"; // 响应式网格：手机1列，小屏2列，≥1200 三列，≥1400 四列
-    
-    const activityCard = document.createElement("div");
-    activityCard.className = "card activity-card h-100"; // h-100使卡片撑满网格容器
-    activityCard.dataset.activityName = name; // 添加标识符
-
-    const spotsLeft = details.max_participants - details.participants.length;
-
-    const instructorsHTML = details.instructors
-      ? details.instructors.map(email => 
-          `<li><strong>${getTeacherName(email)}</strong><br><small class="text-muted">${email}</small></li>`
-        ).join("")
-      : "<li><em>No instructors assigned</em></li>";
-
-    const participantsHTML =
-      details.participants.length > 0
-        ? `<div class="mt-3">
-          <p class="mb-2"><small><strong>Participants (${details.participants.length}/${details.max_participants}):</strong></small></p>
-          <div class="d-flex flex-wrap gap-2">
-            ${details.participants
-              .map((email) => {
-                const isMergingtonEmail = email.includes('@mergington.edu');
-                const displayName = isMergingtonEmail 
-                  ? email.split('@')[0].replace(/\./g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-                  : email;
-                
-                if (isMergingtonEmail) {
-                  // 学校邮箱：显示标签
-                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
-                    ? `<button class="btn btn-sm btn-danger delete-btn p-0" style="width:20px; height:20px; line-height:1;" data-activity="${name}" data-email="${email}" title="Remove"><i class="fas fa-times"></i></button>`
-                    : '';
-                  return `<span class="badge bg-info font-student" style="font-size: 0.7rem; padding: 0.25rem 0.4rem;">${displayName}${deleteBtn}</span>`;
-                } else {
-                  // 外部邮箱：单列显示
-                  const deleteBtn = currentTeacher && details.instructors.includes(currentTeacher.email)
-                    ? `<button class="btn btn-sm btn-danger delete-btn ms-2" data-activity="${name}" data-email="${email}"><i class="fas fa-trash-alt"></i></button>`
-                    : '';
-                  return `<div class="mb-1 d-flex justify-content-between align-items-center"><span class="text-muted font-student">${email}</span>${deleteBtn}</div>`;
-                }
-              })
-              .join("")}
-          </div>
-        </div>`
-        : `<p class="text-muted small">No participants yet</p>`;
-
-    // 拆分星期几和时间
-    const scheduleParts = details.schedule.split(',').map(s => s.trim());
-    const dayOfWeek = scheduleParts[0] || details.schedule;
-    const timeSlot = scheduleParts[1] || '';
-
-    activityCard.innerHTML = `
-      <div class="card-body d-flex flex-column">
-        <h5 class="card-title font-activity">${name}</h5>
-        <p class="card-text flex-grow-1">${details.description}</p>
-        <div class="mb-2 small">
-          <p class="mb-1"><strong>📅 Schedule:</strong></p>
-          <p class="text-muted mb-0 font-schedule">${dayOfWeek}</p>
-          ${timeSlot ? `<p class="text-muted mb-2 font-schedule">${timeSlot}</p>` : '<p class="mb-2"></p>'}
-          <p class="mb-1"><strong>📍 Location:</strong></p>
-          <p class="text-muted font-location">${details.location || 'TBD'}</p>
-        </div>
-        <div class="mb-3">
-          <p class="mb-2"><strong>👨‍🏫 Instructors:</strong></p>
-          <ul class="list-unstyled small">
-            ${instructorsHTML}
-          </ul>
-        </div>
-        <p class="mb-3"><strong>Available Spots:</strong> <span class="badge ${spotsLeft > 5 ? 'bg-success' : spotsLeft > 0 ? 'bg-warning' : 'bg-danger'}">${spotsLeft}/${details.max_participants}</span></p>
-        ${participantsHTML}
-        
-        <div class="mt-3 d-grid gap-2">
-          ${spotsLeft > 0 
-            ? `<button class="btn btn-success register-btn" data-activity="${name}" data-bs-toggle="modal" data-bs-target="#signupModal">
-                <i class="fas fa-user-plus me-2"></i>Register
-              </button>`
-            : `<button class="btn btn-secondary" disabled>
-                <i class="fas fa-lock me-2"></i>Activity Full
-              </button>`
-          }
-        </div>
-        
-        <div class="activity-message mt-3" style="display: none;"></div>
-      </div>
-    `;
-
-    // 绑定删除按钮事件
-    activityCard.querySelectorAll(".delete-btn").forEach((button) => {
-      button.addEventListener("click", handleUnregister);
-    });
-    
-    // 绑定注册按钮事件（仅当有空位时存在该按钮）
-    const registerBtn = activityCard.querySelector(".register-btn");
-    if (registerBtn) {
-      registerBtn.addEventListener("click", (e) => {
-        document.getElementById("activity").value = name;
-      });
-    }
-
-    wrapper.appendChild(activityCard);
-    return wrapper;
-  }
-
-  // Function to update a single activity card (no HTTP request!)
-  function updateActivityCard(activityName) {
-    const details = activitiesData[activityName];
-    if (!details) return;
-
-    // 找到现有的卡片包装器
-    const activitiesContainer = document.getElementById("activities-list");
-    const existingWrapper = Array.from(activitiesContainer.children).find(child => 
-      child.querySelector(`[data-activity-name="${activityName}"]`)
-    );
-    
-    if (!existingWrapper) return;
-
-    // 创建新卡片并替换
-    const newCardWrapper = renderActivityCard(activityName, details);
-    existingWrapper.replaceWith(newCardWrapper);
-  }
 
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch(`${API_BASE}/activities`);
-      activitiesData = await response.json(); // 缓存数据
+      const response = await fetch("/activities");
+      const activities = await response.json();
 
-      activitiesList.innerHTML = ""; // 清空之前的卡片
-      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+      // Clear loading message
+      activitiesList.innerHTML = "";
 
-      Object.entries(activitiesData).forEach(([name, details]) => {
-        // 使用新的渲染函数
-        const activityCardWrapper = renderActivityCard(name, details);
-        activitiesList.appendChild(activityCardWrapper);
+      // Populate activities list
+      Object.entries(activities).forEach(([name, details]) => {
+        const activityCard = document.createElement("div");
+        activityCard.className = "activity-card";
 
-        // 添加到下拉列表
+        const spotsLeft =
+          details.max_participants - details.participants.length;
+
+        // Create participants HTML with delete icons instead of bullet points
+        const participantsHTML =
+          details.participants.length > 0
+            ? `<div class="participants-section">
+              <h5>Participants:</h5>
+              <ul class="participants-list">
+                ${details.participants
+                  .map(
+                    (email) =>
+                      `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}">❌</button></li>`
+                  )
+                  .join("")}
+              </ul>
+            </div>`
+            : `<p><em>No participants yet</em></p>`;
+
+        activityCard.innerHTML = `
+          <h4>${name}</h4>
+          <p>${details.description}</p>
+          <p><strong>Schedule:</strong> ${details.schedule}</p>
+          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <div class="participants-container">
+            ${participantsHTML}
+          </div>
+        `;
+
+        activitiesList.appendChild(activityCard);
+
+        // Add option to select dropdown
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
       });
+
+      // Add event listeners to delete buttons
+      document.querySelectorAll(".delete-btn").forEach((button) => {
+        button.addEventListener("click", handleUnregister);
+      });
     } catch (error) {
-      activitiesList.innerHTML = "<p class='text-danger col-12'>Failed to load activities. Please try again later.</p>";
+      activitiesList.innerHTML =
+        "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
   }
 
-  // Helper function to get teacher name (for display purposes)
-  function getTeacherName(email) {
-    // Since we don't have a list of all teachers on the frontend,
-    // we'll just display the email as-is or extract the name part
-    const namePart = email.split('@')[0].replace(/\./g, ' ');
-    return namePart.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  }
-
   // Handle unregister functionality
   async function handleUnregister(event) {
-    event.preventDefault();
-    const button = event.currentTarget;
+    const button = event.target;
     const activity = button.getAttribute("data-activity");
     const email = button.getAttribute("data-email");
 
-    if (!authToken) {
-      showMessage("You must be logged in to unregister students", "error");
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to unregister ${email} from ${activity}?`)) {
-      return;
-    }
-
     try {
       const response = await fetch(
-        `${API_BASE}${API_BASE}/activities/${encodeURIComponent(activity)}/unregister?email=${encodeURIComponent(email)}`,
+        `/activities/${encodeURIComponent(
+          activity
+        )}/unregister?email=${encodeURIComponent(email)}`,
         {
           method: "DELETE",
-          headers: {
-            "Authorization": `Bearer ${authToken}`
-          }
         }
       );
 
       const result = await response.json();
 
       if (response.ok) {
-        // 直接在前端更新数据（无需HTTP请求）
-        if (activitiesData[activity]) {
-          activitiesData[activity].participants = 
-            activitiesData[activity].participants.filter(p => p !== email);
-          updateActivityCard(activity);
-          // 在活动卡片下显示成功消息
-          showActivityMessage(activity, result.message, "alert alert-success");
-        }
-      } else if (response.status === 401) {
-        showActivityMessage(activity, "Session expired. Please login again.", "alert alert-danger");
-        logout();
-        // 会话过期后重新获取数据
-        await fetchActivities();
-      } else if (response.status === 403) {
-        showActivityMessage(activity, "You are not authorized to unregister from this activity", "alert alert-danger");
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+
+        // Refresh activities list to show updated participants
+        fetchActivities();
       } else {
-        showActivityMessage(activity, result.detail || "An error occurred", "alert alert-danger");
+        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.className = "error";
       }
+
+      messageDiv.classList.remove("hidden");
+
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
     } catch (error) {
-      showActivityMessage(activity, "Failed to unregister. Please try again.", "alert alert-danger");
+      messageDiv.textContent = "Failed to unregister. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
       console.error("Error unregistering:", error);
     }
   }
@@ -378,157 +117,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
 
-    // 验证邮箱格式
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showMessage("Please enter a valid email address", "error");
-      return;
-    }
-
     try {
       const response = await fetch(
-        `${API_BASE}${API_BASE}/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
-        { method: "POST" }
+        `/activities/${encodeURIComponent(
+          activity
+        )}/signup?email=${encodeURIComponent(email)}`,
+        {
+          method: "POST",
+        }
       );
 
       const result = await response.json();
 
       if (response.ok) {
-        // 关闭弹窗
-        const signupModal = bootstrap.Modal.getInstance(document.getElementById('signupModal'));
-        if (signupModal) signupModal.hide();
-
-        // 直接在前端更新数据（无需HTTP请求）
-        if (activitiesData[activity]) {
-          activitiesData[activity].participants.push(email);
-          updateActivityCard(activity);
-          // 在更新后的卡片上显示成功消息（避免被重渲染覆盖）
-          showActivityMessage(activity, result.message, "alert alert-success");
-        }
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
         signupForm.reset();
+
+        // Refresh activities list to show updated participants
+        fetchActivities();
       } else {
-        showMessage(result.detail || "An error occurred", "error");
+        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.className = "error";
       }
+
+      messageDiv.classList.remove("hidden");
+
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
     } catch (error) {
-      showMessage("Failed to sign up. Please try again.", "error");
+      messageDiv.textContent = "Failed to sign up. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
     }
   });
 
-  // 获取活动类别
-  function getActivityCategory(name) {
-    const sportsKeywords = ['soccer', 'basketball', 'gym'];
-    const academicKeywords = ['programming', 'math', 'chess'];
-    const artsKeywords = ['art', 'drama'];
-    
-    const nameLower = name.toLowerCase();
-    
-    if (sportsKeywords.some(keyword => nameLower.includes(keyword))) return 'sports';
-    if (academicKeywords.some(keyword => nameLower.includes(keyword))) return 'academic';
-    if (artsKeywords.some(keyword => nameLower.includes(keyword))) return 'arts';
-    return 'other';
-  }
-
-  // 过滤和排序函数
-  function applyFiltersAndSort() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const selectedDay = dayFilter.value;
-    const selectedCategory = categoryFilter.value;
-    const sortBy = sortSelect.value;
-
-    // 过滤活动
-    let filtered = Object.entries(activitiesData).filter(([name, details]) => {
-      // 搜索过滤
-      const matchesSearch = name.toLowerCase().includes(searchTerm) || 
-                           details.description.toLowerCase().includes(searchTerm);
-      
-      // 星期几过滤
-      const matchesDay = !selectedDay || details.schedule.includes(selectedDay);
-      
-      // 类别过滤
-      const matchesCategory = !selectedCategory || getActivityCategory(name) === selectedCategory;
-      
-      return matchesSearch && matchesDay && matchesCategory;
-    });
-
-    // 排序
-    if (sortBy === "name") {
-      filtered.sort((a, b) => a[0].localeCompare(b[0]));
-    } else if (sortBy === "schedule") {
-      filtered.sort((a, b) => extractTimeValue(a[1].schedule) - extractTimeValue(b[1].schedule));
-    }
-
-    // 按过滤和排序结果重新排列 DOM，避免留下空列
-    const fragment = document.createDocumentFragment();
-    filtered.forEach(([name]) => {
-      const card = activitiesList.querySelector(`[data-activity-name="${name}"]`);
-      const wrapper = card ? card.parentElement : null; // wrapper 是列容器
-      if (wrapper) {
-        wrapper.style.display = "";
-        fragment.appendChild(wrapper);
-      }
-    });
-
-    // 清空并按顺序插入
-    activitiesList.innerHTML = "";
-    activitiesList.appendChild(fragment);
-
-    // 无结果提示
-    if (filtered.length === 0) {
-      const noResults = document.createElement("div");
-      noResults.className = "no-results alert alert-info col-12";
-      noResults.innerHTML = '<i class="fas fa-info-circle"></i> No activities match your filters.';
-      activitiesList.appendChild(noResults);
-    }
-  }
-
-  // 从schedule中提取时间（分钟数）
-  function extractTimeValue(schedule) {
-    const match = schedule.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-    if (match) {
-      let hours = parseInt(match[1]);
-      const minutes = parseInt(match[2]);
-      const period = match[3] ? match[3].toUpperCase() : '';
-      
-      if (period === 'PM' && hours !== 12) {
-        hours += 12;
-      } else if (period === 'AM' && hours === 12) {
-        hours = 0;
-      }
-      
-      return hours * 60 + minutes;
-    }
-    return 0;
-  }
-
-  // 事件监听
-  searchInput.addEventListener("input", applyFiltersAndSort);
-  dayFilter.addEventListener("change", applyFiltersAndSort);
-  categoryFilter.addEventListener("change", applyFiltersAndSort);
-  sortSelect.addEventListener("change", applyFiltersAndSort);
-
   // Initialize app
-  checkAuthStatus();
-  
-  // Initialize demo data on first load
-  async function initializeDemoData() {
-    try {
-      const response = await fetch(`${API_BASE}/initialize-demo-data`, { method: "POST" });
-      if (response.ok) {
-        console.log("Demo data initialized");
-        fetchActivities();
-      }
-    } catch (error) {
-      console.log("Demo data already initialized or error:", error);
-      fetchActivities();
-    }
-  }
-  
-  // 仅在首次加载时初始化数据
-  if (!localStorage.getItem("demoDataInitialized")) {
-    initializeDemoData();
-    localStorage.setItem("demoDataInitialized", "true");
-  } else {
-    fetchActivities();
-  }
+  fetchActivities();
 });
