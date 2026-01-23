@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activities - Mergington High School</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="container">
+        <a href="home.html" class="logo">
+          <h2>Mergington High School</h2>
+        </a>
+        <ul class="nav-links">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="activities.html" class="active">Activities</a></li>
+          <li><a href="lectures.html">Lectures</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="testimonials.html">Testimonials</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+      <div class="container">
+        <h1>All Activities</h1>
+        <p>Find the perfect activity that matches your interests</p>
+      </div>
+    </header>
+
+    <main class="container activities-layout">
+      <!-- Filter Section -->
+      <aside class="filter-section">
+        <div class="filter-controls">
+          <label for="category-filter">Filter by Category:</label>
+          <select id="category-filter">
+            <option value="all">All Categories</option>
+            <option value="Strategic & Academic">Strategic & Academic</option>
+            <option value="Technology">Technology</option>
+            <option value="Sports & Fitness">Sports & Fitness</option>
+            <option value="Arts & Creativity">Arts & Creativity</option>
+          </select>
+        </div>
+      </aside>
+
+      <!-- Activities Grid -->
+      <section class="activities-list">
+        <div id="activities-grid" class="activities-grid">
+          <p>Loading activities...</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <p>&copy; 2026 Mergington High School. All rights reserved.</p>
+        <p>Building futures through excellence in education</p>
+      </div>
+    </footer>
+
+    <script src="activities-list.js"></script>
+  </body>
+</html>

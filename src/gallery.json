@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "id": "placeholder-1",
+      "type": "placeholder",
+      "title": "Gallery Coming Soon",
+      "description": "Photos and videos from our activities will be added here soon!",
+      "activity": null,
+      "date": null
+    }
+  ]
+}

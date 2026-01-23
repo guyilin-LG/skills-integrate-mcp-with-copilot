@@ -1,0 +1,19 @@
+{
+  "lectures": [
+    {
+      "id": "lecture-1",
+      "name": "Coming Soon",
+      "title": "Upcoming Guest Speaker",
+      "description": "Stay tuned for announcements about our next inspiring guest speaker!",
+      "image": "placeholder.jpg",
+      "date": "TBD",
+      "status": "coming-soon",
+      "activity": null,
+      "social": {
+        "linkedin": "",
+        "instagram": "",
+        "twitter": ""
+      }
+    }
+  ]
+}

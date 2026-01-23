@@ -39,14 +39,55 @@ activities = load_activities()
 
 @app.get("/")
 def root():
-    return RedirectResponse(url="/static/index.html")
+    """Redirect to the new multi-page homepage"""
+    return RedirectResponse(url="/static/home.html")
 
 
 @app.get("/activities")
 def get_activities():
+    """Get all activities data"""
     # Reload activities to get latest data
     activities = load_activities()
     return activities
+
+
+@app.get("/lectures")
+def get_lectures():
+    """Get all lectures data"""
+    lectures_file = os.path.join(current_dir, "lectures.json")
+    try:
+        with open(lectures_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Lectures data file not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid lectures data format")
+
+
+@app.get("/gallery")
+def get_gallery():
+    """Get all gallery items"""
+    gallery_file = os.path.join(current_dir, "gallery.json")
+    try:
+        with open(gallery_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Gallery data file not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid gallery data format")
+
+
+@app.get("/testimonials")
+def get_testimonials():
+    """Get all testimonials"""
+    testimonials_file = os.path.join(current_dir, "testimonials.json")
+    try:
+        with open(testimonials_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Testimonials data file not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid testimonials data format")
 
 
 @app.post("/activities/{activity_name}/signup")
